@@ -3,7 +3,7 @@ name: Auto Update Version
 on:
   push:
     paths:
-      - 'apk/app_v*.apk'  # 监听apk目录下的APK文件变更
+      - 'BLE_test/apk/app_v*.apk'  # 监听apk目录下的APK文件变更
 
 jobs:
   update-version:
