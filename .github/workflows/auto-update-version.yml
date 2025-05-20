@@ -32,7 +32,7 @@ jobs:
           # 生成version.json内容
           echo '{
             "latest_version": "${{ steps.find-apk.outputs.VERSION }}",
-            "download_url": "https://BLECradle.github.io/BLE_test/apk/${{ steps.find-apk.outputs.LATEST_APK }}",
+            "download_url": "https://ruddyis.github.io/BLECradle.github.io/BLE_test/apk/${{ steps.find-apk.outputs.LATEST_APK }}",
             "release_notes": "自动更新版本信息"
           }' > version.json
 
