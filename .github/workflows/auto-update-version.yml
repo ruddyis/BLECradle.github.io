@@ -3,7 +3,7 @@ name: Auto Update Version
 on:
   push:
     paths:
-      - 'BLE_test/apk/app_v*.apk'  # 修正路径匹配实际APK位置
+      - 'BLE_test/apk/app_v*.apk'  # 精确监听指定目录的APK文件变更
 
 jobs:
   update-version:
@@ -11,28 +11,44 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 确保获取完整提交历史
 
       - name: Find Latest APK
         id: find-apk
         run: |
-          LATEST_APK=$(ls -t BLE_test/apk/app_v*.apk | head -1)
+          # 进入APK目录
+          cd BLE_test/apk
+
+          # 按时间排序获取最新APK文件名（兼容网页端上传的随机哈希后缀）
+          LATEST_APK=$(ls -t app_v*.apk | head -1)
           echo "最新APK文件: $LATEST_APK"
-          VERSION=$(basename $LATEST_APK | grep -oP '\d+\.\d+\.\d+')  # 提取纯数字版本号（如 2.0.0）
+
+          # 提取纯数字版本号（如从 app_v2.0.0.apk 提取 2.0.0）
+          VERSION=$(echo $LATEST_APK | grep -oP '\d+\.\d+\.\d+')
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
-          echo "LATEST_APK=$(basename $LATEST_APK)" >> $GITHUB_OUTPUT
+          echo "LATEST_APK=$LATEST_APK" >> $GITHUB_OUTPUT
 
       - name: Update version.json
         run: |
+          # 生成正确的version.json路径
+          JSON_PATH="BLE_test/version.json"
+
+          # 动态生成JSON内容
           echo '{
             "latest_version": "${{ steps.find-apk.outputs.VERSION }}",
             "download_url": "https://ruddyis.github.io/BLECradle.github.io/BLE_test/apk/${{ steps.find-apk.outputs.LATEST_APK }}",
             "release_notes": "自动更新版本信息"
-          }' > BLE_test/version.json  # 修正路径
+          }' > $JSON_PATH
+
+          # 验证生成结果
+          echo "更新后的version.json内容："
+          cat $JSON_PATH
 
       - name: Commit Changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
           git add BLE_test/version.json
-          git commit -m "chore: 自动更新版本至 ${{ steps.find-apk.outputs.VERSION }}"
+          git commit -m "[skip ci] chore: 自动更新版本至 ${{ steps.find-apk.outputs.VERSION }}"
           git push
